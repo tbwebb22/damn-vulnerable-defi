@@ -6,6 +6,7 @@ import "solady/src/utils/SafeTransferLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol";
 import "@gnosis.pm/safe-contracts/contracts/proxies/IProxyCreationCallback.sol";
+import "hardhat/console.sol";
 
 /**
  * @title WalletRegistry
@@ -69,6 +70,7 @@ contract WalletRegistry is IProxyCreationCallback, Ownable {
         external
         override
     {
+        console.log("inside wallet registry callback");
         if (token.balanceOf(address(this)) < PAYMENT_AMOUNT) { // fail early
             revert NotEnoughFunds();
         }
@@ -131,5 +133,10 @@ contract WalletRegistry is IProxyCreationCallback, Ownable {
             ),
             (address)
         );
+    }
+
+    function testFunction(uint256 i, uint256 j) external view returns (uint256) {
+      console.log("inside test");
+      return i;
     }
 }
