@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 interface IGnosisSafeProxyFactory {
     function createProxy(address masterCopy, bytes calldata data) external returns (address);
@@ -47,8 +48,13 @@ contract WalletDeployer {
      * @return aim address of the created proxy
      */
     function drop(bytes memory wat) external returns (address aim) {
-        aim = fact.createProxy(copy, wat);
-        if (mom != address(0) && !can(msg.sender, aim)) {
+        // aim = fact.createProxy(copy, wat);
+        aim = msg.sender;
+        console.log("before");
+        bool theyCan = can(msg.sender, aim);
+        console.log("yo");
+        console.logBool(theyCan);
+        if (mom != address(0) && !theyCan) {
             revert Boom();
         }
         IERC20(gem).transfer(msg.sender, pay);

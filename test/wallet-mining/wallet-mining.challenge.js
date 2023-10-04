@@ -66,6 +66,12 @@ describe('[Challenge] Wallet mining', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+
+        // await walletDeployer.can(ward.address, DEPOSIT_ADDRESS); // Passes
+        // await walletDeployer.can(ward.address, player.address); // Fails
+        // await walletDeployer.can(player.address, DEPOSIT_ADDRESS); // Fails
+        // await walletDeployer.can(DEPOSIT_ADDRESS, ward.address, );
+        await walletDeployer.connect(player).drop("0x");
     });
 
     after(async function () {
